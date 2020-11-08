@@ -1,0 +1,8 @@
+---
+map_frame: "base_footprint"
+map_res: 0.5
+map_x: -25
+map_y: -25
+map_z: 0
+map_height: 100
+map_width: 100

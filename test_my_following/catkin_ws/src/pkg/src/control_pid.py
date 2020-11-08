@@ -17,10 +17,13 @@ from nav_msgs.msg import Odometry,OccupancyGrid
 from visualization_msgs.msg import MarkerArray,Marker
 from geometry_msgs.msg import Twist
 # from sensor_msgs import Joy
+from PID import PID_control
+
 
 
 class Control(object):
     def __init__(self):
+        self.controller=PID_control('angle')
         self.sub_map = rospy.Subscriber("depthcam_map", OccupancyGrid, self.cb_map, queue_size=1)
         self.pub_marker_arr = rospy.Publisher("marker_arr", MarkerArray, queue_size=1)
         self.pub_testmap=rospy.Publisher("Omap", OccupancyGrid, queue_size=1)
@@ -29,19 +32,17 @@ class Control(object):
         self.auto = False
         # self.sub_joy = rospy.Subscriber('joy_teleop/joy', Joy, self.cb_joy, queue_size=1)
 
-        self.scan_radius=[4,6,1] #[start,end,interval]
         self.check_map_array=[]
-        for r in range(self.scan_radius[0],self.scan_radius[1],self.scan_radius[2]):
-            for i in range(80):
-                radius=r
-                search_angle=i-40
-                x = radius * math.cos(search_angle* math.pi / 180.0)
-                y = radius * math.sin(search_angle* math.pi / 180.0)
-                x_shift=x+1
-                y_shift=y+5
-                x_grid=x_shift*4
-                y_grid=y_shift*4
-                self.check_map_array.append(int(x_grid)+int(y_grid)*40)
+        for i in range(80):
+            radius=4.5
+            search_angle=i-40
+            x = radius * math.cos(search_angle* math.pi / 180.0)
+            y = radius * math.sin(search_angle* math.pi / 180.0)
+            x_shift=x+1
+            y_shift=y+5
+            x_grid=x_shift*4
+            y_grid=y_shift*4
+            self.check_map_array.append(int(x_grid)+int(y_grid)*40)
 
 
         self.checking_Omap()
@@ -63,21 +64,14 @@ class Control(object):
 
         if left!=None and right!=None:
             middle=(left+right)/2
-            print('left=',left,',right=',right,',middle=',middle)
+            self.controller.update(middle-40)
+            u=self.controller.output
+            print('left=',left,',right=',right,',middle=',middle,'PID output=',u)
 
 
             vel=Twist()
-            if(middle>45):
-                print('Turn left')
-                vel.linear.x=1
-                vel.angular.z = 0.2
-            elif(middle<35):
-                print('Turn right')
-                vel.linear.x=1
-                vel.angular.z = -0.2
-            else:
-                print('Go straight')
-                vel.linear.x=1
+            vel.linear.x=1
+            vel.angular.z = (-u)*0.1
 
             if self.auto:
                 self.pub_cmd_vel.publish(vel)
