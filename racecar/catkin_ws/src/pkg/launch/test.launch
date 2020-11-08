@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+    <node pkg="pkg" type="pc2grid" name="pc2grid" output="screen" ></node>
+    <node pkg="pkg" type="control.py" name="control" output="screen" ></node>
+</launch>
